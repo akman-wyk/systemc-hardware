@@ -1,0 +1,9 @@
+CC     = g++
+OPT    = -O2 # -O3
+DEBUG  = -g
+OTHER  = -Wall -Wno-deprecated
+CFLAGS = $(OPT) $(OTHER)
+SYSTEMC = /home/wyk/systemc
+INCDIR = -I$(SYSTEMC)/include
+LIBDIR = -L$(SYSTEMC)/lib-linux64
+LIBS = -lsystemc
