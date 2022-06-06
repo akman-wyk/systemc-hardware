@@ -1,13 +1,19 @@
 #include <systemc.h>
 
 #include <cmath>
+#include <fstream>
 #include <string>
 
 #include "compressor.h"
 #include "compressor_driver.h"
+#include "compressor_monitor.h"
 #include "config.h"
 
 int sc_main(int argc, char* argv[]) {
+    std::string data_file = std::string(argv[1]);
+    std::string out_file = std::string(argv[2]);
+    int run_time = std::stoi(argv[3]);
+
     sc_clock clk("clk", 10, SC_NS);
 
     sc_signal<bool>        rst_n;
@@ -59,6 +65,8 @@ int sc_main(int argc, char* argv[]) {
     }
 
     compressor_driver dri("driver");
+    dri.set_data_file(data_file);
+    dri.write_ready(write_ready);
     dri.rst_n(rst_n);
     dri.write_valid(write_valid);
     dri.write_last(write_last);
@@ -71,6 +79,14 @@ int sc_main(int argc, char* argv[]) {
     for (int i = 0; i < max_data_num; i++) {
         dri.write_data[i](write_data[i]);
     }
+
+    compressor_monitor monitor("monitor");
+    monitor.set_out_file(out_file);
+    monitor.clk(clk);
+    monitor.read_data_value(read_data_value);
+    monitor.read_data_offset(read_data_offset);
+    monitor.read_valid(read_valid);
+    monitor.read_ready(read_ready);
 
     // in out signal
     sc_trace(fp, clk, "clk");
@@ -106,7 +122,7 @@ int sc_main(int argc, char* argv[]) {
     //     sc_trace(fp, comp.write_data_reg[i], name);
     // }
 
-    sc_start(1000, SC_NS);
+    sc_start(run_time, SC_NS);
 
     sc_close_vcd_trace_file(fp);  // close(fp)
     return 0;

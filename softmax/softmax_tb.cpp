@@ -5,8 +5,14 @@
 #include "config.h"
 #include "softmax.h"
 #include "softmax_driver.h"
+#include "softmax_monitor.h"
 
 int sc_main(int argc, char* argv[]) {
+    std::string data_file = std::string(argv[1]);
+    std::string out_file = std::string(argv[2]);
+    int run_time = std::stoi(argv[3]);
+    int data_set_num = std::stoi(argv[4]);
+
     sc_clock clk("clk", 10, SC_NS);
 
     sc_signal<bool>     rst_n;
@@ -34,11 +40,22 @@ int sc_main(int argc, char* argv[]) {
     }
 
     softmax_driver driver("softmax driver");
+    driver.set_data_file(data_file, data_set_num);
+    driver.in_ready(in_ready);
     driver.rst_n(rst_n);
     driver.in_valid(in_valid);
     driver.out_ready(out_ready);
     for (int i = 0; i < softmax_input_num; i++) {
         driver.in_data[i](in_data[i]);
+    }
+
+    softmax_monitor monitor("monitor");
+    monitor.set_out_file(out_file);
+    monitor.clk(clk);
+    monitor.out_valid(out_valid);
+    monitor.out_ready(out_ready);
+    for (int i = 0; i < softmax_input_num; i++) {
+        monitor.out_data[i](out_data[i]);
     }
 
     sc_trace(fp, clk, "clk");
@@ -54,7 +71,18 @@ int sc_main(int argc, char* argv[]) {
         sc_trace(fp, out_data[i], name);
     }
 
-    sc_start(1000, SC_NS);
+    for (int i = 0; i < 10; i++) {
+        std::string name = "exp[" + std::to_string(i) + "]_in_data";
+        sc_trace(fp, softmax.exp[i]->in_data, name);
+        name = "exp[" + std::to_string(i) + "]_in_valid";
+        sc_trace(fp, softmax.exp[i]->in_valid, name);
+        name = "exp[" + std::to_string(i) + "]_out_data";
+        sc_trace(fp, softmax.exp[i]->out_data, name);
+        name = "exp[" + std::to_string(i) + "]_out_valid";
+        sc_trace(fp, softmax.exp[i]->out_valid, name);
+    }
+
+    sc_start(run_time, SC_NS);
 
     sc_close_vcd_trace_file(fp);  // close(fp)
     return 0;

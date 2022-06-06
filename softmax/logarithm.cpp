@@ -46,8 +46,8 @@ void Logarithm::GetMEReg() {
         if (e_src == 0xf) {
             e_result = 0;
         } else {
-            uint16_t e_s = ~(e_src & 0x10);
-            uint16_t e_src_abs = (e_src & 0x10) ? e_src - 0xf : 0xf - e_src;
+            uint16_t e_s = ((e_src >> 4) & 0x1) ? 0x0 : 0x1;
+            uint16_t e_src_abs = (e_s) ? 0xf - e_src : e_src - 0xf;
 
             // hardware impl
             // uint16_t e_src_abs_0 = e_src_abs & 0x1;

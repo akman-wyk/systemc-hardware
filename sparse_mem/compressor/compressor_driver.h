@@ -2,10 +2,15 @@
 #include <systemc.h>
 
 #include <cmath>
+#include <string>
 
 #include "config.h"
 
 SC_MODULE(compressor_driver) {
+    std::string data_file_;
+
+    sc_in<bool> write_ready;
+
     sc_out<bool>                  rst_n;
     sc_out<bool>                  write_valid;
     sc_out<bool>                  write_last;
@@ -16,6 +21,8 @@ SC_MODULE(compressor_driver) {
     sc_out<bool>                  read_ready;
     sc_out<bool>                  compress_en;
     sc_out<sc_uint<2> >           offset_width_cfg;
+
+    void set_data_file(const std::string& data_file);
 
     void generate_input();
 

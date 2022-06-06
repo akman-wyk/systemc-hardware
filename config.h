@@ -19,3 +19,8 @@ const int log_linear_scope_num = 50;
 
 const int dense_mem_width = 16;
 const int dense_mem_height = 8;
+
+//test
+const int test_data_num_for_compressor = 50;
+const int test_data_num_for_softmax = 100;
+const int test_data_num_for_dense_mem = 160;

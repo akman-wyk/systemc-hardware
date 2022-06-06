@@ -105,8 +105,11 @@ void Exponent::GetUV() {
         int      u1 = (frac_num >> 10);
         uint16_t v1 = (frac_num & 0x3ff);
         if (sign_num == 0x1) {
-            u1 = -u1 - 1;
-            v1 = 0x400 - v1;
+            u1 = -u1;
+            if (v1 != 0) {
+                u1--;
+                v1 = 0x400 - v1;
+            }
         }
 
         if (!mult_status_reg.read() && mult_out_valid.read()) {

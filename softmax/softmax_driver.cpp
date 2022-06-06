@@ -5,14 +5,23 @@
 
 #include "half_float/half_float.h"
 
+void softmax_driver::set_data_file(const std::string& data_file, int data_set_num) {
+    this->data_file_ = data_file;
+    this->data_set_num_ = data_set_num;
+}
+
 void softmax_driver::generate_input() {
-    std::vector<uint16_t> inputs;
-    std::ifstream         is;
-    is.open("./hardware_data", std::ios_base::in);
-    for (int i = 0; i < softmax_input_num; i++) {
-        double input;
-        is >> input;
-        inputs.emplace_back(half(input).GetBits());
+    std::vector<std::vector<uint16_t> > input_data;
+    std::ifstream                       is;
+    is.open(this->data_file_);
+    for (int i = 0; i < this->data_set_num_; i++) {
+        std::vector<uint16_t> inputs;
+        for (int j = 0; j < softmax_input_num; j++) {
+            uint16_t data;
+            is >> data;
+            inputs.emplace_back(data);
+        }
+        input_data.emplace_back(std::move(inputs));
     }
     is.close();
 
@@ -25,13 +34,19 @@ void softmax_driver::generate_input() {
     wait(47, SC_NS);
     out_ready.write(true);
 
-    in_valid.write(true);
-    for (int i = 0; i < softmax_input_num; i++) {
-        in_data[i].write(inputs[i]);
-    }
+    for (int i = 0; i < test_data_num_for_softmax; i++) {
+        in_valid.write(true);
+        for (int j = 0; j < softmax_input_num; j++) {
+            in_data[j].write(input_data[i][j]);
+        }
 
-    wait(10, SC_NS);
-    in_valid.write(false);
+        wait(10, SC_NS);
+        in_valid.write(false);
+
+        while (!in_ready.read()) {
+            wait(10, SC_NS);
+        }
+    }
 }
 
 void softmax_driver::generate_reset() {

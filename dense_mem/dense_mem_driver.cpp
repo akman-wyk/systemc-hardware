@@ -1,21 +1,22 @@
-#include "compressor_driver.h"
+#include "dense_mem_driver.h"
 
 #include <fstream>
 #include <vector>
 
 #include "config.h"
 
-void compressor_driver::set_data_file(const std::string& data_file) {
+void DenseMemDriver::set_data_file(const std::string& data_file, int config) {
     this->data_file_ = data_file;
+    this->config_ = config;
 }
 
-void compressor_driver::generate_input() {
+void DenseMemDriver::generate_input() {
     std::vector<std::vector<uint16_t> > input_data;
     std::ifstream                       is;
     is.open(this->data_file_);
-    for (int i = 0; i < test_data_num_for_compressor; i++) {
+    for (int i = 0; i < test_data_num_for_dense_mem; i++) {
         std::vector<uint16_t> inputs;
-        for (int j = 0; j < max_data_num; j++) {
+        for (int j = 0; j < dense_mem_width; j++) {
             uint16_t data;
             is >> data;
             inputs.emplace_back(data);
@@ -24,29 +25,20 @@ void compressor_driver::generate_input() {
     }
     is.close();
 
-    compress_en.write(true);
-    offset_width_cfg.write(2);
+    write_config.write(this->config_ == 1);
 
     write_valid.write(false);
-    write_last.write(false);
-    write_group.write(0);
-    write_begin.write(false);
-    write_size.write(0);
     read_ready.write(false);
-    for (int i = 0; i < max_data_num; i++) {
+    for (int i = 0; i < dense_mem_width; i++) {
         write_data[i].write(0);
     }
 
     wait(47, SC_NS);
     read_ready.write(true);
 
-    for (int i = 0; i < test_data_num_for_compressor; i++) {
+    for (int i = 0; i < test_data_num_for_dense_mem; i++) {
         write_valid.write(true);
-        write_last.write((i == test_data_num_for_compressor - 1));
-        write_group.write(i);
-        write_begin.write((i == 0));
-        write_size.write(16);
-        for (int j = 0; j < max_data_num; j++) {
+        for (int j = 0; j < dense_mem_width; j++) {
             write_data[j].write(input_data[i][j]);
         }
 
@@ -59,7 +51,7 @@ void compressor_driver::generate_input() {
     }
 }
 
-void compressor_driver::generate_reset() {
+void DenseMemDriver::generate_reset() {
     rst_n.write(1);
     wait(1, SC_NS);
     rst_n.write(0);
